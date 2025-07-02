@@ -12,9 +12,25 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from dotenv import load_dotenv
 from fastapi import FastAPI
 import uvicorn
+
+# 載入環境變數
 load_dotenv('.env')
 
-models = OpenAIModel(api_key=config.OPENAI_API, model_engine=config.OPENAI_MODEL_ENGINE)
+# 檢查必要的環境變數
+if not config.OPENAI_API:
+    logger.error("❌ OPENAI_API 環境變數未設置！請在 Replit Secrets 中設置 OPENAI_API")
+    raise ValueError("OPENAI_API 環境變數未設置")
+
+if not config.TINDER_TOKEN:
+    logger.warning("⚠️  TINDER_TOKEN 環境變數未設置，Tinder 功能將無法使用")
+
+# 創建模型實例
+try:
+    models = OpenAIModel(api_key=config.OPENAI_API, model_engine=config.OPENAI_MODEL_ENGINE)
+    logger.info(f"✅ OpenAI 模型初始化成功: {config.OPENAI_MODEL_ENGINE}")
+except Exception as e:
+    logger.error(f"❌ OpenAI 模型初始化失敗: {e}")
+    raise
 
 chatgpt = ChatGPT(models)
 dalle = DALLE(models)
