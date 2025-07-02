@@ -14,9 +14,13 @@ load_dotenv('.env')
 def test_simple_api():
     """簡單的 API 測試"""
     
-    # 使用你的 API key
-    api_key = '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'
-    model_engine = 'gpt-3.5-turbo'
+    # 從環境變數讀取 API key
+    api_key = os.getenv('OPENAI_API')
+    model_engine = 'gpt-4'
+    
+    if not api_key:
+        print("❌ 請在 .env 文件中設置 OPENAI_API")
+        return
     
     print(f"🔑 API Key: {api_key[:10]}...")
     print(f"🤖 模型: {model_engine}")

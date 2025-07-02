@@ -14,9 +14,13 @@ load_dotenv('.env')
 def test_openai_api():
     """測試 OpenAI API 真實回覆"""
     
-    # 從環境變數或直接設定 API key
-    api_key = os.getenv('OPENAI_API') or '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'
-    model_engine = os.getenv('OPENAI_MODEL_ENGINE') or 'gpt-3.5-turbo'
+    # 從環境變數讀取 API key
+    api_key = os.getenv('OPENAI_API')
+    model_engine = os.getenv('OPENAI_MODEL_ENGINE') or 'gpt-4'
+    
+    if not api_key:
+        print("❌ 請在 .env 文件中設置 OPENAI_API")
+        return
     
     print(f"🔑 使用 API Key: {api_key[:10]}...")
     print(f"🤖 使用模型: {model_engine}")

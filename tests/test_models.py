@@ -11,8 +11,8 @@ from src.models import OpenAIModel
 
 class TestOpenAIModel(unittest.TestCase):
     def setUp(self):
-        self.api_key = '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'
-        self.model_engine = 'gpt-3.5-turbo'
+        self.api_key = 'sk-test-key-for-testing-only'
+        self.model_engine = 'gpt-4'
         self.image_size = '512x512'
 
     @patch('src.models.OpenAI')
