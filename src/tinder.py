@@ -9,21 +9,52 @@ class TinderAPI():
         self._token = token
         self.chatroom_match_id = []
 
+    def _make_request(self, url, method='GET', json_data=None):
+        """統一的請求處理方法"""
+        headers = {"X-Auth-Token": self._token}
+        
+        try:
+            if method == 'GET':
+                response = requests.get(url, headers=headers)
+            elif method == 'POST':
+                response = requests.post(url, headers=headers, json=json_data)
+            else:
+                raise ValueError(f"不支持的 HTTP 方法: {method}")
+            
+            # 檢查響應狀態
+            if response.status_code == 401:
+                raise Exception("Tinder token 無效或已過期 (401)")
+            elif response.status_code == 403:
+                raise Exception("Tinder token 權限不足 (403)")
+            elif response.status_code != 200:
+                raise Exception(f"Tinder API 錯誤: {response.status_code} - {response.text}")
+            
+            # 檢查響應內容
+            if not response.text.strip():
+                raise Exception("Tinder API 返回空響應")
+            
+            return response.json()
+            
+        except requests.exceptions.RequestException as e:
+            raise Exception(f"網絡請求錯誤: {e}")
+        except ValueError as e:
+            raise Exception(f"JSON 解析錯誤: {e}")
+
     def profile(self):
-        data = requests.get(TINDER_URL + "/v2/profile?include=account%2Cuser", headers={"X-Auth-Token": self._token}).json()
+        data = self._make_request(TINDER_URL + "/v2/profile?include=account%2Cuser")
         return Profile(data["data"], self)
 
     def matches(self, limit=10):
-        data = requests.get(TINDER_URL + f"/v2/matches?count={limit}", headers={"X-Auth-Token": self._token}).json()
+        data = self._make_request(TINDER_URL + f"/v2/matches?count={limit}")
         self.chatroom_match_id = list(map(lambda match: match['id'], data["data"]["matches"]))
         return list(map(lambda match: Match(match, self), data["data"]["matches"]))
 
     def get_messages(self, match_id):
-        data = requests.get(TINDER_URL + f"/v2/matches/{match_id}/messages?count=50", headers={"X-Auth-Token": self._token}).json()
+        data = self._make_request(TINDER_URL + f"/v2/matches/{match_id}/messages?count=50")
         return Chatroom(data['data'], match_id, self)
 
     def get_user_info(self, user_id):
-        data = requests.get(TINDER_URL + f"/user/{user_id}", headers={"X-Auth-Token": self._token}).json()
+        data = self._make_request(TINDER_URL + f"/user/{user_id}")
         return Person(data["results"], self)
 
     def send_message(self, match_id, from_id, to_id, message):
@@ -34,7 +65,7 @@ class TinderAPI():
             'otherId': to_id,
             'sessonId': None
         }
-        data = requests.post(TINDER_URL + f'/user/matches/{match_id}', json=body, headers={"X-Auth-Token": self._token}).json()
+        data = self._make_request(TINDER_URL + f'/user/matches/{match_id}', method='POST', json_data=body)
         return data
 
 
