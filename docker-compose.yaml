@@ -1,9 +1,15 @@
-version: "3"
+version: "3.8"
 
 services:
   app:
-    container_name: discord-chatgpt-ai-assistant
+    container_name: chatgpt-tinder-bot
     build: .
     restart: always
     ports:
-      - "${APP_PORT}:${APP_PORT}"
+      - "8080:8080"
+    environment:
+      - OPENAI_API=${OPENAI_API}
+      - OPENAI_MODEL_ENGINE=${OPENAI_MODEL_ENGINE:-gpt-3.5-turbo}
+      - TINDER_TOKEN=${TINDER_TOKEN}
+      - SYSTEM_MESSAGE=${SYSTEM_MESSAGE:-You are a helpful assistant.}
+      - APP_PORT=8080

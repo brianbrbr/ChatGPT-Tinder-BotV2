@@ -1,4 +1,5 @@
 from src.models import ModelInterface
+import config
 
 
 class ChatGPT:
@@ -7,12 +8,12 @@ class ChatGPT:
 
     def get_response(self, text: str) -> str:
         messages = [{
-            'role': 'system', 'content': 'You are a helpful assistant.'
+            'role': 'system', 'content': config.SYSTEM_MESSAGE
         }, {
             'role': 'user', 'content': text
         }]
         response = self.model.chat_completion(messages)
-        content = response['choices'][0]['message']['content']
+        content = response.choices[0].message.content
         return content
 
 

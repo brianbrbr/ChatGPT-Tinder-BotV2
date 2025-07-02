@@ -1,32 +1,91 @@
+import sys
+import os
+
+# ✅ 讓 Python 找到 src 資料夾
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 import unittest
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 from src.models import OpenAIModel
 
 
 class TestOpenAIModel(unittest.TestCase):
     def setUp(self):
-        self.api_key = 'test_api_key'
-        self.model_engine = 'test_engine'
-        self.max_tokens = 128
+        self.api_key = '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'
+        self.model_engine = 'gpt-3.5-turbo'
         self.image_size = '512x512'
-        self.model = OpenAIModel(self.api_key, self.model_engine, self.max_tokens, self.image_size)
 
-    @patch('openai.Completion.create')
-    def test_text_completion(self, mock_create):
-        mock_create.return_value.choices[0].text = 'Test response'
-        prompt = 'Test prompt'
-        result = self.model.text_completion(prompt)
-        mock_create.assert_called_once_with(engine=self.model_engine,
-                                            prompt=prompt,
-                                            max_tokens=self.max_tokens,
-                                            stop=None,
-                                            temperature=0.5)
-        self.assertEqual(result, 'Test response')
+    @patch('src.models.OpenAI')
+    def test_chat_completion(self, mock_openai):
+        # 設置mock
+        mock_client = MagicMock()
+        mock_openai.return_value = mock_client
+        
+        mock_response = MagicMock()
+        mock_response.choices = [MagicMock()]
+        mock_response.choices[0].message.content = 'Test response'
+        mock_client.chat.completions.create.return_value = mock_response
+        
+        # 創建模型實例（在mock之後）
+        self.model = OpenAIModel(self.api_key, self.model_engine, self.image_size)
+        
+        # 測試數據
+        messages = [
+            {'role': 'system', 'content': 'You are a helpful assistant.'},
+            {'role': 'user', 'content': 'Hello'}
+        ]
+        
+        # 執行測試
+        result = self.model.chat_completion(messages)
+        
+        # 驗證
+        mock_client.chat.completions.create.assert_called_once_with(
+            model=self.model_engine,
+            messages=messages
+        )
+        self.assertEqual(result, mock_response)
 
-    @patch('openai.Image.create')
-    def test_image_generation(self, mock_create):
-        mock_create.return_value.data[0].url = 'Test URL'
-        prompt = 'Test prompt'
+    @patch('src.models.OpenAI')
+    def test_image_generation(self, mock_openai):
+        # 設置mock
+        mock_client = MagicMock()
+        mock_openai.return_value = mock_client
+        
+        mock_response = MagicMock()
+        mock_response.data = [MagicMock()]
+        mock_response.data[0].url = 'https://test-image-url.com/image.jpg'
+        mock_client.images.generate.return_value = mock_response
+        
+        # 創建模型實例（在mock之後）
+        self.model = OpenAIModel(self.api_key, self.model_engine, self.image_size)
+        
+        # 測試數據
+        prompt = 'A beautiful sunset'
+        
+        # 執行測試
         result = self.model.image_generation(prompt)
-        mock_create.assert_called_once_with(prompt=prompt, n=1, size=self.image_size)
-        self.assertEqual(result, 'Test URL')
+        
+        # 驗證
+        mock_client.images.generate.assert_called_once_with(
+            prompt=prompt,
+            n=1,
+            size=self.image_size
+        )
+        self.assertEqual(result, 'https://test-image-url.com/image.jpg')
+
+    @patch('src.models.OpenAI')
+    def test_model_initialization(self, mock_openai):
+        """測試模型初始化"""
+        mock_client = MagicMock()
+        mock_openai.return_value = mock_client
+        
+        self.model = OpenAIModel(self.api_key, self.model_engine, self.image_size)
+        
+        self.assertEqual(self.model.model_engine, self.model_engine)
+        self.assertEqual(self.model.image_size, self.image_size)
+        self.assertIsNotNone(self.model.client)
+        mock_openai.assert_called_once_with(api_key=self.api_key)
+
+
+if __name__ == '__main__':
+    unittest.main(verbosity=2)

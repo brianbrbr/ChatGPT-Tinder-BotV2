@@ -6,6 +6,7 @@ from src.tinder import TinderAPI
 from src.dialog import Dialog
 from src.logger import logger
 from opencc import OpenCC
+import config
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from dotenv import load_dotenv
@@ -13,7 +14,7 @@ from fastapi import FastAPI
 import uvicorn
 load_dotenv('.env')
 
-models = OpenAIModel(api_key=os.getenv('OPENAI_API'), model_engine=os.getenv('OPENAI_MODEL_ENGINE'))
+models = OpenAIModel(api_key=config.OPENAI_API, model_engine=config.OPENAI_MODEL_ENGINE)
 
 chatgpt = ChatGPT(models)
 dalle = DALLE(models)
@@ -21,7 +22,7 @@ dialog = Dialog()
 app = FastAPI()
 scheduler = AsyncIOScheduler()
 cc = OpenCC('s2t')
-TINDER_TOKEN = os.getenv('TINDER_TOKEN')
+TINDER_TOKEN = config.TINDER_TOKEN
 
 
 @scheduler.scheduled_job("cron", minute='*/5', second=0, id='reply_messages')
@@ -72,4 +73,4 @@ async def root():
 
 
 if __name__ == "__main__":
-    uvicorn.run('main:app', host='0.0.0.0', port=8080)
+    uvicorn.run('main:app', host='0.0.0.0', port=config.APP_PORT)
